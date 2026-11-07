@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.clipboard-announcer" path="/org/gnome/shell/extensions/clipboard-announcer/">
+    <key name="speech-rate" type="i">
+      <default>55</default>
+      <summary>Speech rate slider for speech dispatcher</summary>
+    </key>
+    <key name="inspect-shortcut" type="as">
+      <default>[]</default>
+      <summary> Custom keyboard shortcut to inspect the contents of the clipboard</summary>
+    </key>
+  </schema>
+</schemalist>
+

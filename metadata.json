@@ -1,0 +1,13 @@
+{
+  "uuid": "clipboard-announcer@accessibility.local",
+  "name": "Clipboard Announcer",
+  "description": "Lightweight spoken announcements for clipboard operations via Speech Dispatcher.",
+  "shell-version": [
+    "50",
+    "51"
+  ],
+  "settings-schema": "org.gnome.shell.extensions.clipboard-announcer",
+  "url": "",
+  "version": 1
+}
+
