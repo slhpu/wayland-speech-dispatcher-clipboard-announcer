@@ -12,7 +12,7 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
         let settings = this.getSettings();
         let page = new Adw.PreferencesPage();
 
-        // Button to clear/delete the custom inspection shortcut
+        // 1. Shortcut Group (First)
         const deleteInspectButton = new Gtk.Button({
             icon_name: 'edit-delete-symbolic',
             valign: Gtk.Align.CENTER,
@@ -22,12 +22,11 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
             tooltip_text: 'Delete clipboard inspection shortcut'
         });
 
-        let group = new Adw.PreferencesGroup({
-            title: 'Clipboard Inspection Settings',
+        let groupShortcut = new Adw.PreferencesGroup({
+            title: 'Clipboard Inspection Shortcut',
             header_suffix: deleteInspectButton
         });
 
-        // Instantiate custom shortcut capture widget for inspection keybinding
         const inspectShortcutKeyBoard = new ShortcutSettingWidget(
             settings,
             'inspect-shortcut',
@@ -35,7 +34,6 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
             'Press Enter to set or change shortcut'
         );
 
-        // Hide delete button if no shortcut is assigned initially
         if (!inspectShortcutKeyBoard.isAcceleratorSet()) {
             deleteInspectButton.visible = false;
         }
@@ -52,9 +50,14 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
             }
         });
 
-        group.add(inspectShortcutKeyBoard);
+        groupShortcut.add(inspectShortcutKeyBoard);
+        page.add(groupShortcut);
 
-        // Action row and slider for adjusting speech output rate
+        // 2. Speech Settings Group (Slider Last)
+        let speechGroup = new Adw.PreferencesGroup({
+            title: 'Speech Settings'
+        });
+
         let rateRow = new Adw.ActionRow({
             title: 'Speech Output Rate Adjustment',
             subtitle: 'Alters the speech rate of the speech dispatcher voice output using up/down arrows or page up/page down'
@@ -84,9 +87,9 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
         });
 
         rateRow.add_suffix(scale);
-        group.add(rateRow);
+        speechGroup.add(rateRow);
+        page.add(speechGroup);
 
-        page.add(group);
         window.add(page);
     }
 }
@@ -134,13 +137,16 @@ const ShortcutSettingWidget = class extends Adw.ActionRow {
 
         this.connect('activated', this._onActivated.bind(this));
         this.bind_property('shortcut', this.shortLabel, 'accelerator', GObject.BindingFlags.DEFAULT);
-        [this.shortcut] = this._settings.get_strv(this._key);
+        
+        let [savedAccel] = this._settings.get_strv(this._key);
+        this.shortcut = savedAccel || '';
 
         this.add_suffix(this.shortcutBox);
     }
 
     isAcceleratorSet() {
-        return Boolean(this.shortLabel.get_accelerator());
+        let [val] = this._settings.get_strv(this._key);
+        return Boolean(val && val.trim() !== '');
     }
 
     resetAccelerator() {
@@ -174,13 +180,11 @@ const ShortcutSettingWidget = class extends Adw.ActionRow {
         let mask = state & Gtk.accelerator_get_default_mod_mask();
         mask &= ~Gdk.ModifierType.LOCK_MASK;
 
-        // Allow Escape key to cancel/close the shortcut recording window
         if (!mask && keyval === Gdk.KEY_Escape) {
             this._editor.close();
             return Gdk.EVENT_STOP;
         }
 
-        // Allow Backspace to clear the active shortcut binding
         if (keyval === Gdk.KEY_BackSpace) {
             this.saveShortcut();
             return Gdk.EVENT_STOP;
