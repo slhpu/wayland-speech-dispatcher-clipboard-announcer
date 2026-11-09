@@ -6,7 +6,7 @@
       <summary>Speech rate slider for speech dispatcher</summary>
     </key>
     <key name="inspect-shortcut" type="as">
-      <default>[&apos;&lt;Control&gt;&lt;Super&gt;c&apos;]</default>
+      <default>['&lt;Control&gt;&lt;Super&gt;C']</default>
       <summary> Custom keyboard shortcut to inspect the contents of the clipboard</summary>
     </key>
   </schema>
