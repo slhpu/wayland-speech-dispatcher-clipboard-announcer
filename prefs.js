@@ -18,7 +18,8 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
             valign: Gtk.Align.CENTER,
             css_classes: ['error'],
             hexpand: false,
-            vexpand: false
+            vexpand: false,
+            tooltip_text: 'Delete clipboard inspection shortcut'
         });
 
         let group = new Adw.PreferencesGroup({
@@ -31,7 +32,7 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
             settings,
             'inspect-shortcut',
             'Inspect Clipboard Keybind',
-            'Press Backspace to clear shortcut'
+            'Press Enter to set or change shortcut'
         );
 
         // Hide delete button if no shortcut is assigned initially
