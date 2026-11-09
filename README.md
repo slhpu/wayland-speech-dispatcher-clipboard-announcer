@@ -8,7 +8,11 @@ Automatic speech notifications when text, files, or folders are copied to the cl
 
 On-demand clipboard inspection shortcut to read current clipboard contents or item counts.
 
-GNOME Preferences integration with speech rate adjustment controls and customizable keybindings.
+By default this keyboard shortcut is; Ctrl + Super + c
+
+This can be changed in the preferences.
+
+Preferences slider to adjust the voice rate, set to 50 by default.
 
 Installation:
 
