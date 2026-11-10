@@ -30,7 +30,7 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
         const inspectShortcutKeyBoard = new ShortcutSettingWidget(
             settings,
             'inspect-shortcut',
-            'Inspect Clipboard Keybind',
+            'Inspect Clipboard Shortcut',
             'Press Enter to set or change shortcut'
         );
 
@@ -55,11 +55,11 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
 
         // 2. Speech Settings Group (Slider Last)
         let speechGroup = new Adw.PreferencesGroup({
-            title: 'Speech Settings'
+            title: 'Voice Rate Settings'
         });
 
         let rateRow = new Adw.ActionRow({
-            title: 'Speech Output Rate Adjustment',
+            title: 'Voice Rate Adjustment',
             subtitle: 'Alters the speech rate of the speech dispatcher voice output using up/down arrows or page up/page down'
         });
 
