@@ -9,13 +9,11 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 export default class ClipboardAnnouncerExtension extends Extension {
     enable() {
         this._active = true; 
-        
-        // Ensure boot flag persists across session state resets to avoid swallowing initial copy events
+
+        // Ensure that the timer to silence the first clipboard ownership change in the boot sequence does not get re-triggered by lock screen or wake
         if (ClipboardAnnouncerExtension._hasBooted === undefined) {
             ClipboardAnnouncerExtension._hasBooted = false;
         }
-        
-        this._ignoreNextChange = !ClipboardAnnouncerExtension._hasBooted;
 
         this._settings = this.getSettings();
         this._clipboard = St.Clipboard.get_default();
@@ -23,6 +21,17 @@ export default class ClipboardAnnouncerExtension extends Extension {
         
         this._lastClipboardContent = '';
         this._timeoutId = 0;
+        this._startupTimeoutId = 0;
+
+        //Timer to silence the first clipboard ownership change not triggered by user action during the boot / login sequence
+        if (!ClipboardAnnouncerExtension._hasBooted) {
+            this._startupTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10000, () => {
+                this._startupTimeoutId = 0;
+                ClipboardAnnouncerExtension._hasBooted = true;
+                return GLib.SOURCE_REMOVE;
+            });
+        }
+
         this._cancellable = new Gio.Cancellable();
 
         // Register custom keyboard shortcut to inspect current clipboard contents on demand
@@ -39,9 +48,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
             if (!this._active) return;
 
             if (type === Meta.SelectionType.SELECTION_CLIPBOARD) {
-                if (this._ignoreNextChange) {
-                    this._ignoreNextChange = false;
-                    ClipboardAnnouncerExtension._hasBooted = true;
+                if (!ClipboardAnnouncerExtension._hasBooted) {
                     return;
                 }
 
@@ -69,6 +76,11 @@ export default class ClipboardAnnouncerExtension extends Extension {
         if (this._timeoutId) {
             GLib.source_remove(this._timeoutId);
             this._timeoutId = 0;
+        }
+
+        if (this._startupTimeoutId) {
+            GLib.source_remove(this._startupTimeoutId);
+            this._startupTimeoutId = 0;
         }
 
         // Remove shortcut keybinding mapping
@@ -234,20 +246,20 @@ export default class ClipboardAnnouncerExtension extends Extension {
 
             if (isFileSelection && (fileCount > 0 || folderCount > 0)) {
                 if (fileCount === 1 && folderCount === 0) {
-                    announcement = `file ${lastSingleName}`;
-                } else if (folderCount === 1 && fileCount === 0) {
-                    announcement = `folder ${lastSingleName}`;
+                    announcement = `Clipboard contains file ${lastSingleName}`;
+                } else if (folderCount === 1 && folderCount === 0) {
+                    announcement = `Clipboard contains folder ${lastSingleName}`;
                 } else if (fileCount > 0 && folderCount > 0) {
-                    announcement = `${fileCount} files and ${folderCount} folders`;
+                    announcement = `Clipboard contains ${fileCount} files and ${folderCount} folders`;
                 } else if (fileCount > 1) {
-                    announcement = `${fileCount} files`;
+                    announcement = `Clipboard contains ${fileCount} files`;
                 } else if (folderCount > 1) {
-                    announcement = `${folderCount} folders`;
+                    announcement = `Clipboard contains ${folderCount} folders`;
                 }
             } else {
                 // Read out up to the first 30 characters for text inspection
                 if (trimmed.length > 30) {
-                    announcement = trimmed.substring(0, 30);
+                    announcement = trimmed.substring(0, 50);
                 } else {
                     announcement = trimmed;
                 }
