@@ -1,7 +1,7 @@
 {
   "uuid": "clipboard-announcer@accessibility.local",
   "name": "Clipboard Announcer",
-  "description": "Lightweight spoken announcements for clipboard operations via Speech Dispatcher.",
+  "description": "Lightweight spoken announcements for clipboard operations via Speech Dispatcher. This extension relies on a change of clipboard content to announce the action, if you press your copy or cut shortcuts and get silence, the clipboard probably already contains that content, use the keyboard shortcut provided to inspect the clipboard contents to check.",
   "shell-version": [
     "50",
     "51"
