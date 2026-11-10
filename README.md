@@ -2,6 +2,10 @@ Clipboard Announcer for Orca Screen Reader
 
 A GNOME Shell extension designed for Wayland that automatically announces copied text, single files, folders, or multiple items via Speech Dispatcher (spd-say) to support Orca screen reader users.
 
+Note on limitations: This extension relies on clipboard ownership changes within the gnome compositor under wayland, without getting too technical, this means that it will only announce a copy or cut event once, as the clipboard content will not change after it has been populated. So if you press your shortcut and get silence, use the inspect clipboard content keyboard shortcut provided to check the clipboard contents with speech feedback.
+
+The extension also cannot distinguish between a copy or cut event under wayland, and cannot announce paste events, as these are still restricted to the application being pasted into, but it is still a big step up from total silence and more useful in my oppinion than something like gpaste.
+
 Features:
 
 Automatic speech notifications when text, files, or folders are copied to the clipboard.
