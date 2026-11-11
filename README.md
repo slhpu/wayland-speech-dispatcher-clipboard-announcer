@@ -26,7 +26,7 @@ The schemas file should already be compiled in the schemas folder, you can check
 Compile the GSettings schema files: glib-compile-schemas ~/.local/share/gnome-shell/extensions/clipboard-announcer@accessibility.local/schemas/
 
 
-Restart GNOME Shell (or log out and back in on Wayland).
+Restart GNOME Shell or log out and back in.
 
 Enable the extension using Extension Manager or via terminal: gnome-extensions enable clipboard-announcer@accessibility.local
 
@@ -35,4 +35,4 @@ License: This project is licensed under the GNU General Public License v3.0.
 About: This extension was built using the help of AI tools, but has been checked and edited by the author.
 
 I will not be updating this extension regularly except for my own use, as I do not have the expertise or time to take on a full extension maintainer role. 
-If anyone would like to fork this extension and package and maintain it for use in the extension store then please do so with my thanks.
+If anyone would like to fork this extension and package and maintain it for download through the extension manager then please do so with my thanks.
