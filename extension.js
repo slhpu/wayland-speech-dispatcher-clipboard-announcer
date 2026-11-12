@@ -8,8 +8,8 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 export default class ClipboardAnnouncerExtension extends Extension {
     enable() {
-        this._active = true; 
-
+        this._active = true;
+        
         // Ensure that the timer to silence the first clipboard ownership change in the boot sequence does not get re-triggered by lock screen or wake
         if (ClipboardAnnouncerExtension._hasBooted === undefined) {
             ClipboardAnnouncerExtension._hasBooted = false;
@@ -58,7 +58,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
     }
 
     disable() {
-        this._active = false; 
+        this._active = false;
 
         // Cancel pending asynchronous operations
         if (this._cancellable) {
@@ -91,7 +91,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
         this._selection = null;
     }
 
-    // Debounce clipboard updates to prevent duplicate or rapid-fire trigger signals
+    // Debounce clipboard updates to prevent duplicate or rapid-fire trigger signals    
     _queueClipboardChange() {
         if (this._timeoutId) {
             GLib.source_remove(this._timeoutId);
@@ -112,7 +112,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
         });
     }
 
-    // Evaluate copied content type (text vs files/folders) and trigger automatic screen reader announcement
+    // Evaluate copied content type (text vs files/folders) and trigger automatic screen reader announcement    
     _handleClipboardChange() {
         if (!this._active || !this._clipboard || !this._cancellable) return;
 
@@ -139,15 +139,18 @@ export default class ClipboardAnnouncerExtension extends Extension {
                 if (uri.startsWith('file://')) {
                     isFileSelection = true;
                 } else if (uri.startsWith('/')) {
-                    uri = `file://${uri}`;
+                    try {
+                        uri = GLib.filename_to_uri(uri, null);
+                    } catch (e) {
+                        uri = `file://${uri}`;
+                    }
                     isFileSelection = true;
                 } else {
                     continue;
                 }
 
                 try {
-                    let decodedUri = decodeURIComponent(uri);
-                    let file = Gio.File.new_for_uri(decodedUri);
+                    let file = Gio.File.new_for_uri(uri);
                     
                     if (file.query_exists(null)) {
                         let info = file.query_info('standard::type,standard::display-name', Gio.FileQueryInfoFlags.NONE, null);
@@ -188,7 +191,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
         });
     }
 
-    // Inspect current clipboard contents on-demand via shortcut keybinding (truncates text to 30 chars or reads item counts)
+    // Inspect current clipboard contents on-demand via shortcut keybinding (truncates text to 50 chars or reads item counts)
     _inspectClipboard() {
         if (!this._active || !this._clipboard) return;
 
@@ -214,15 +217,18 @@ export default class ClipboardAnnouncerExtension extends Extension {
                 if (uri.startsWith('file://')) {
                     isFileSelection = true;
                 } else if (uri.startsWith('/')) {
-                    uri = `file://${uri}`;
+                    try {
+                        uri = GLib.filename_to_uri(uri, null);
+                    } catch (e) {
+                        uri = `file://${uri}`;
+                    }
                     isFileSelection = true;
                 } else {
                     continue;
                 }
 
                 try {
-                    let decodedUri = decodeURIComponent(uri);
-                    let file = Gio.File.new_for_uri(decodedUri);
+                    let file = Gio.File.new_for_uri(uri);
                     
                     if (file.query_exists(null)) {
                         let info = file.query_info('standard::type,standard::display-name', Gio.FileQueryInfoFlags.NONE, null);
@@ -238,16 +244,17 @@ export default class ClipboardAnnouncerExtension extends Extension {
                         }
                     }
                 } catch (e) {
-                    // Fallback if file query fails
+                    console.error(`ClipboardAnnouncer: Failed to query file ${uri}: ${e.message}`);
                 }
             }
 
             let announcement = "";
 
+            // Format automatic announcement based on file/folder count logic
             if (isFileSelection && (fileCount > 0 || folderCount > 0)) {
                 if (fileCount === 1 && folderCount === 0) {
                     announcement = `Clipboard contains file ${lastSingleName}`;
-                } else if (folderCount === 1 && folderCount === 0) {
+                } else if (folderCount === 1 && fileCount === 0) {
                     announcement = `Clipboard contains folder ${lastSingleName}`;
                 } else if (fileCount > 0 && folderCount > 0) {
                     announcement = `Clipboard contains ${fileCount} files and ${folderCount} folders`;
@@ -257,7 +264,6 @@ export default class ClipboardAnnouncerExtension extends Extension {
                     announcement = `Clipboard contains ${folderCount} folders`;
                 }
             } else {
-                // Read out up to the first 30 characters for text inspection
                 if (trimmed.length > 30) {
                     announcement = trimmed.substring(0, 50);
                 } else {
