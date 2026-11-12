@@ -12,7 +12,7 @@ Automatic speech notifications when text, files, or folders are copied to the cl
 
 On-demand clipboard inspection shortcut to read current clipboard contents or item counts.
 
-By default this keyboard shortcut is; Ctrl + Super + c
+By default this keyboard shortcut is; `Ctrl + Super + C`
 
 This can be changed in the preferences.
 
@@ -24,7 +24,7 @@ Clone or download this repository into your local GNOME extensions directory:
 
 `git clone https://github.com/your-username/wayland-speech-dispatcher-clipboard-announcer.git ~/.local/share/gnome-shell/extensions/clipboard-announcer@accessibility.local`
 
-Replace your-username with your actual username.
+Replace `your-username` with your actual username.
 
 The schemas file should already be compiled in the schemas folder, you can check for it by looking for gschemas.compiled in the schemas folder, if it is not their or the extension errors, delete the file and compile the schema.
 
