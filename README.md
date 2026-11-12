@@ -20,15 +20,19 @@ Preferences slider to adjust the voice rate, set to 50 by default.
 
 Installation:
 
-Clone or download this repository into your local GNOME extensions directory: git clone https://github.com/your-username/wayland-speech-dispatcher-clipboard-announcer.git ~/.local/share/gnome-shell/extensions/clipboard-announcer@accessibility.local
+Clone or download this repository into your local GNOME extensions directory: 
+
+`git clone https://github.com/your-username/wayland-speech-dispatcher-clipboard-announcer.git ~/.local/share/gnome-shell/extensions/clipboard-announcer@accessibility.local`
 
 The schemas file should already be compiled in the schemas folder, you can check for it by looking for gschemas.compiled in the schemas folder, if it is not their or the extension errors, delete the file and compile the schema.
-Compile the GSettings schema files: glib-compile-schemas ~/.local/share/gnome-shell/extensions/clipboard-announcer@accessibility.local/schemas/
 
+`glib-compile-schemas ~/.local/share/gnome-shell/extensions/clipboard-announcer@accessibility.local/schemas/`
 
 Restart GNOME Shell or log out and back in.
 
-Enable the extension using Extension Manager or via terminal: gnome-extensions enable clipboard-announcer@accessibility.local
+Enable the extension using Extension Manager or via terminal: 
+
+`gnome-extensions enable clipboard-announcer@accessibility.local`
 
 License: This project is licensed under the GNU General Public License v3.0.
 
