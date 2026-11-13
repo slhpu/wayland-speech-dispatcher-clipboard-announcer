@@ -20,7 +20,21 @@ Preferences slider to adjust the voice rate, set to 50 by default.
 
 Installation:
 
-Clone or download this repository into your local GNOME extensions directory: 
+First install the Gnome Extension Manager
+
+On fedora 44/45 via flatpak
+
+`flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo`
+
+You can then search the software store for the gnome extension manager or run
+
+`flatpak install flathub com.mattjakeman.ExtensionManager`
+
+On Ubuntu 26.04 run
+
+`sudo apt update && sudo apt install gnome-shell-extension-manager`
+
+Next, clone or download this repository into your local GNOME extensions directory: 
 
 ```git clone https://github.com/slhpu/wayland-speech-dispatcher-clipboard-announcer.git ~/.local/share/gnome-shell/extensions/clipboard-announcer@accessibility.local```
 
