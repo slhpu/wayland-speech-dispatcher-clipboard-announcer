@@ -23,7 +23,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
         this._timeoutId = 0;
         this._startupTimeoutId = 0;
 
-        //Timer to silence the first clipboard ownership change not triggered by user action during the boot / login sequence
+        // Timer to silence the first clipboard ownership change not triggered by user action during the boot / login sequence
         if (!ClipboardAnnouncerExtension._hasBooted) {
             this._startupTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10000, () => {
                 this._startupTimeoutId = 0;
@@ -112,166 +112,243 @@ export default class ClipboardAnnouncerExtension extends Extension {
         });
     }
 
-    // Evaluate copied content type (text vs files/folders) and trigger automatic screen reader announcement    
+    // Check advertised MIME types via Meta.Selection before reading content
+    _checkMimeCategory(callback) {
+        let mimetypes = [];
+        try {
+            mimetypes = this._selection.get_mimetypes(Meta.SelectionType.SELECTION_CLIPBOARD) || [];
+        } catch (e) {
+            console.error(`ClipboardAnnouncer: Failed to get mimetypes: ${e.message}`);
+        }
+
+        if (mimetypes.length === 0) {
+            callback('empty');
+            return;
+        }
+
+        const hasTextOrUri = mimetypes.some(m =>
+            m === 'text/uri-list' ||
+            m === 'x-special/gnome-copied-files' ||
+            m.startsWith('text/plain') ||
+            m === 'UTF8_STRING' ||
+            m === 'STRING'
+        );
+
+        if (hasTextOrUri) {
+            callback('text');
+            return;
+        }
+
+        const hasImage = mimetypes.some(m => m.startsWith('image/'));
+        if (hasImage) {
+            callback('image');
+            return;
+        }
+
+        callback('binary');
+    }
+
+    // Evaluate copied content type (text, files/folders, images, or binary) and trigger automatic screen reader announcement    
     _handleClipboardChange() {
         if (!this._active || !this._clipboard || !this._cancellable) return;
 
-        this._clipboard.get_text(St.ClipboardType.CLIPBOARD, (clipboard, text) => {
+        this._checkMimeCategory((category) => {
             if (!this._active || (this._cancellable && this._cancellable.is_cancelled())) return;
 
-            if (!text || text === this._lastClipboardContent) {
+            if (category === 'empty') {
+                this._lastClipboardContent = '';
                 return;
             }
-            this._lastClipboardContent = text;
 
-            let trimmed = text.trim();
-            let lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-            
-            let fileCount = 0;
-            let folderCount = 0;
-            let lastSingleName = "";
-            let isFileSelection = false;
+            if (category === 'image') {
+                this._lastClipboardContent = '';
+                this._speakFeedback("Image added to clipboard");
+                return;
+            }
 
-            // Parse lines to check if URIs point to local files or directories
-            for (let line of lines) {
-                let uri = line;
+            if (category === 'binary') {
+                this._lastClipboardContent = '';
+                this._speakFeedback("Binary added to clipboard");
+                return;
+            }
+
+            // Original text and URI file/folder handling
+            this._clipboard.get_text(St.ClipboardType.CLIPBOARD, (clipboard, text) => {
+                if (!this._active || (this._cancellable && this._cancellable.is_cancelled())) return;
+
+                if (!text || text === this._lastClipboardContent) {
+                    return;
+                }
+                this._lastClipboardContent = text;
+
+                let trimmed = text.trim();
+                let lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
                 
-                if (uri.startsWith('file://')) {
-                    isFileSelection = true;
-                } else if (uri.startsWith('/')) {
-                    try {
-                        uri = GLib.filename_to_uri(uri, null);
-                    } catch (e) {
-                        uri = `file://${uri}`;
-                    }
-                    isFileSelection = true;
-                } else {
-                    continue;
-                }
+                let fileCount = 0;
+                let folderCount = 0;
+                let lastSingleName = "";
+                let isFileSelection = false;
 
-                try {
-                    let file = Gio.File.new_for_uri(uri);
+                // Parse lines to check if URIs point to local files or directories
+                for (let line of lines) {
+                    let uri = line;
                     
-                    if (file.query_exists(null)) {
-                        let info = file.query_info('standard::type,standard::display-name', Gio.FileQueryInfoFlags.NONE, null);
-                        let fileType = info.get_file_type();
-                        let name = info.get_display_name() || file.get_basename();
-
-                        if (fileType === Gio.FileType.DIRECTORY) {
-                            folderCount++;
-                            lastSingleName = name;
-                        } else {
-                            fileCount++;
-                            lastSingleName = name;
+                    if (uri.startsWith('file://')) {
+                        isFileSelection = true;
+                    } else if (uri.startsWith('/')) {
+                        try {
+                            uri = GLib.filename_to_uri(uri, null);
+                        } catch (e) {
+                            uri = `file://${uri}`;
                         }
+                        isFileSelection = true;
+                    } else {
+                        continue;
                     }
-                } catch (e) {
-                    console.error(`ClipboardAnnouncer: Failed to query file ${uri}: ${e.message}`);
+
+                    try {
+                        let file = Gio.File.new_for_uri(uri);
+                        
+                        if (file.query_exists(null)) {
+                            let info = file.query_info('standard::type,standard::display-name', Gio.FileQueryInfoFlags.NONE, null);
+                            let fileType = info.get_file_type();
+                            let name = info.get_display_name() || file.get_basename();
+
+                            if (fileType === Gio.FileType.DIRECTORY) {
+                                folderCount++;
+                                lastSingleName = name;
+                            } else {
+                                fileCount++;
+                                lastSingleName = name;
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`ClipboardAnnouncer: Failed to query file ${uri}: ${e.message}`);
+                    }
                 }
-            }
 
-            let announcement = "text added to clipboard";
+                let announcement = "text added to clipboard";
 
-            // Format automatic announcement based on file/folder count logic
-            if (isFileSelection && (fileCount > 0 || folderCount > 0)) {
-                if (fileCount === 1 && folderCount === 0) {
-                    announcement = `file ${lastSingleName} added to clipboard`;
-                } else if (folderCount === 1 && fileCount === 0) {
-                    announcement = `folder ${lastSingleName} added to clipboard`;
-                } else if (fileCount > 0 && folderCount > 0) {
-                    announcement = `${fileCount} files and ${folderCount} folders added to clipboard`;
-                } else if (fileCount > 1) {
-                    announcement = `${fileCount} files added to clipboard`;
-                } else if (folderCount > 1) {
-                    announcement = `${folderCount} folders added to clipboard`;
+                // Format automatic announcement based on file/folder count logic
+                if (isFileSelection && (fileCount > 0 || folderCount > 0)) {
+                    if (fileCount === 1 && folderCount === 0) {
+                        announcement = `file ${lastSingleName} added to clipboard`;
+                    } else if (folderCount === 1 && fileCount === 0) {
+                        announcement = `folder ${lastSingleName} added to clipboard`;
+                    } else if (fileCount > 0 && folderCount > 0) {
+                        announcement = `${fileCount} files and ${folderCount} folders added to clipboard`;
+                    } else if (fileCount > 1) {
+                        announcement = `${fileCount} files added to clipboard`;
+                    } else if (folderCount > 1) {
+                        announcement = `${folderCount} folders added to clipboard`;
+                    }
                 }
-            }
 
-            this._speakFeedback(announcement);
+                this._speakFeedback(announcement);
+            });
         });
     }
 
-    // Inspect current clipboard contents on-demand via shortcut keybinding (truncates text to 50 chars or reads item counts)
+    // Inspect current clipboard contents on-demand via shortcut keybinding (truncates text to 50 chars, or handles files, images, and binary)
     _inspectClipboard() {
         if (!this._active || !this._clipboard) return;
 
-        this._clipboard.get_text(St.ClipboardType.CLIPBOARD, (clipboard, text) => {
+        this._checkMimeCategory((category) => {
             if (!this._active) return;
 
-            if (!text || text.trim() === '') {
+            if (category === 'empty') {
                 this._speakFeedback("clipboard is empty");
                 return;
             }
 
-            let trimmed = text.trim();
-            let lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-            
-            let fileCount = 0;
-            let folderCount = 0;
-            let lastSingleName = "";
-            let isFileSelection = false;
+            if (category === 'image') {
+                this._speakFeedback("Clipboard contains image");
+                return;
+            }
 
-            for (let line of lines) {
-                let uri = line;
+            if (category === 'binary') {
+                this._speakFeedback("Clipboard contains binary data");
+                return;
+            }
+
+            this._clipboard.get_text(St.ClipboardType.CLIPBOARD, (clipboard, text) => {
+                if (!this._active) return;
+
+                if (!text || text.trim() === '') {
+                    this._speakFeedback("clipboard is empty");
+                    return;
+                }
+
+                let trimmed = text.trim();
+                let lines = trimmed.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
                 
-                if (uri.startsWith('file://')) {
-                    isFileSelection = true;
-                } else if (uri.startsWith('/')) {
-                    try {
-                        uri = GLib.filename_to_uri(uri, null);
-                    } catch (e) {
-                        uri = `file://${uri}`;
-                    }
-                    isFileSelection = true;
-                } else {
-                    continue;
-                }
+                let fileCount = 0;
+                let folderCount = 0;
+                let lastSingleName = "";
+                let isFileSelection = false;
 
-                try {
-                    let file = Gio.File.new_for_uri(uri);
+                for (let line of lines) {
+                    let uri = line;
                     
-                    if (file.query_exists(null)) {
-                        let info = file.query_info('standard::type,standard::display-name', Gio.FileQueryInfoFlags.NONE, null);
-                        let fileType = info.get_file_type();
-                        let name = info.get_display_name() || file.get_basename();
-
-                        if (fileType === Gio.FileType.DIRECTORY) {
-                            folderCount++;
-                            lastSingleName = name;
-                        } else {
-                            fileCount++;
-                            lastSingleName = name;
+                    if (uri.startsWith('file://')) {
+                        isFileSelection = true;
+                    } else if (uri.startsWith('/')) {
+                        try {
+                            uri = GLib.filename_to_uri(uri, null);
+                        } catch (e) {
+                            uri = `file://${uri}`;
                         }
+                        isFileSelection = true;
+                    } else {
+                        continue;
                     }
-                } catch (e) {
-                    console.error(`ClipboardAnnouncer: Failed to query file ${uri}: ${e.message}`);
-                }
-            }
 
-            let announcement = "";
+                    try {
+                        let file = Gio.File.new_for_uri(uri);
+                        
+                        if (file.query_exists(null)) {
+                            let info = file.query_info('standard::type,standard::display-name', Gio.FileQueryInfoFlags.NONE, null);
+                            let fileType = info.get_file_type();
+                            let name = info.get_display_name() || file.get_basename();
 
-            // Format automatic announcement based on file/folder count logic
-            if (isFileSelection && (fileCount > 0 || folderCount > 0)) {
-                if (fileCount === 1 && folderCount === 0) {
-                    announcement = `Clipboard contains file ${lastSingleName}`;
-                } else if (folderCount === 1 && fileCount === 0) {
-                    announcement = `Clipboard contains folder ${lastSingleName}`;
-                } else if (fileCount > 0 && folderCount > 0) {
-                    announcement = `Clipboard contains ${fileCount} files and ${folderCount} folders`;
-                } else if (fileCount > 1) {
-                    announcement = `Clipboard contains ${fileCount} files`;
-                } else if (folderCount > 1) {
-                    announcement = `Clipboard contains ${folderCount} folders`;
+                            if (fileType === Gio.FileType.DIRECTORY) {
+                                folderCount++;
+                                lastSingleName = name;
+                            } else {
+                                fileCount++;
+                                lastSingleName = name;
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`ClipboardAnnouncer: Failed to query file ${uri}: ${e.message}`);
+                    }
                 }
-            } else {
-                if (trimmed.length > 30) {
-                    announcement = trimmed.substring(0, 50);
+
+                let announcement = "";
+
+                // Format automatic announcement based on file/folder count logic
+                if (isFileSelection && (fileCount > 0 || folderCount > 0)) {
+                    if (fileCount === 1 && folderCount === 0) {
+                        announcement = `Clipboard contains file ${lastSingleName}`;
+                    } else if (folderCount === 1 && fileCount === 0) {
+                        announcement = `Clipboard contains folder ${lastSingleName}`;
+                    } else if (fileCount > 0 && folderCount > 0) {
+                        announcement = `Clipboard contains ${fileCount} files and ${folderCount} folders`;
+                    } else if (fileCount > 1) {
+                        announcement = `Clipboard contains ${fileCount} files`;
+                    } else if (folderCount > 1) {
+                        announcement = `Clipboard contains ${folderCount} folders`;
+                    }
                 } else {
-                    announcement = trimmed;
+                    if (trimmed.length > 30) {
+                        announcement = trimmed.substring(0, 50);
+                    } else {
+                        announcement = trimmed;
+                    }
                 }
-            }
 
-            this._speakFeedback(announcement);
+                this._speakFeedback(announcement);
+            });
         });
     }
 
