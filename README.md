@@ -8,7 +8,7 @@ The extension also cannot distinguish between a copy or cut event under wayland,
 
 Features:
 
-Automatic speech notifications when text, files, or folders are copied to the clipboard.
+Automatic speech notifications when text, files, folders, image binary data or unknown binary data are added to the clipboard.
 
 On-demand clipboard inspection shortcut to read current clipboard contents or item counts.
 
@@ -17,6 +17,10 @@ By default this keyboard shortcut is; `Ctrl + Super + C`
 This can be changed in the preferences.
 
 Preferences slider to adjust the voice rate, set to 50 by default.
+
+Spin button in the preferences to adjust the inspect clipboard announcement for number of text characters.
+
+Handles Files, Folders, image binary data, empty clipboard, all standard URI and rich and non rich text formats, with fallbacks for unknown data.
 
 Installation:
 
