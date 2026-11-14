@@ -12,7 +12,7 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
         let settings = this.getSettings();
         let page = new Adw.PreferencesPage();
 
-        // 1. Shortcut Group (First)
+        // Inspect clipboard contents keyboard shortcut
         const deleteInspectButton = new Gtk.Button({
             icon_name: 'edit-delete-symbolic',
             valign: Gtk.Align.CENTER,
@@ -53,7 +53,39 @@ export default class ClipboardAnnouncerPreferences extends ExtensionPreferences 
         groupShortcut.add(inspectShortcutKeyBoard);
         page.add(groupShortcut);
 
-        // 2. Speech Settings Group (Slider Last)
+        // Spin button to choose maximum characters for clipboard inspection shortcut to announce in text
+        let lengthGroup = new Adw.PreferencesGroup({
+            title: 'Inspection Character Limit'
+        });
+
+        let lengthRow = new Adw.ActionRow({
+            title: 'Maximum Characters to Announce',
+            subtitle: 'Sets the maximum number of characters spoken when inspecting text clipboard content'
+        });
+
+        let lengthAdjustment = new Gtk.Adjustment({
+            lower: 10,
+            upper: 500,
+            step_increment: 5,
+            page_increment: 25,
+            value: settings.get_int('max-trim-length')
+        });
+
+        let spinButton = new Gtk.SpinButton({
+            adjustment: lengthAdjustment,
+            numeric: true,
+            valign: Gtk.Align.CENTER
+        });
+
+        lengthAdjustment.connect('value-changed', (adj) => {
+            settings.set_int('max-trim-length', Math.round(adj.get_value()));
+        });
+
+        lengthRow.add_suffix(spinButton);
+        lengthGroup.add(lengthRow);
+        page.add(lengthGroup);
+
+        // Voice rate slider
         let speechGroup = new Adw.PreferencesGroup({
             title: 'Voice Rate Settings'
         });
