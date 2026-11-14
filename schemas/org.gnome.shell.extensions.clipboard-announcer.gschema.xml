@@ -7,7 +7,11 @@
     </key>
     <key name="inspect-shortcut" type="as">
       <default>['&lt;Control&gt;&lt;Super&gt;C']</default>
-      <summary> Custom keyboard shortcut to inspect the contents of the clipboard</summary>
+      <summary>Custom keyboard shortcut to inspect the contents of the clipboard</summary>
+    </key>
+    <key name="max-trim-length" type="i">
+      <default>50</default>
+      <summary>Maximum character length for clipboard inspection feedback</summary>
     </key>
   </schema>
 </schemalist>
