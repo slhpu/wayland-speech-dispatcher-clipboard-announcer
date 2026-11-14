@@ -231,7 +231,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
         callback(announcement);
     }
 
-    //Handles the clipboard ownership change by mymtype categories and _proccessClipboardText 
+    //Handles the clipboard ownership change by mymetype categories and _proccessClipboardText 
     _handleClipboardChange() {
         if (!this._active || !this._clipboard || !this._cancellable) return;
 
