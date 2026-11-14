@@ -231,7 +231,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
         callback(announcement);
     }
 
-    //Handles the clipboard ownership change and handles categories via _proccessClipboardText() 
+    //Handles the clipboard ownership change by mymtype categories and _proccessClipboardText 
     _handleClipboardChange() {
         if (!this._active || !this._clipboard || !this._cancellable) return;
 
@@ -251,7 +251,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
 
             if (category === 'binary') {
                 this._lastClipboardContent = '';
-                this._speakFeedback("Binary added to clipboard");
+                this._speakFeedback("Unknown binary added to clipboard");
                 return;
             }
 
@@ -270,7 +270,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
         });
     }
 
-    //Handles clipboard inspection via the keyboard shortcut and manages categories via _processClipboardText()    
+    //Handles clipboard inspection via the keyboard shortcut, mymetype categories and _processClipboardText    
     _inspectClipboard() {
         if (!this._active || !this._clipboard) return;
 
@@ -288,7 +288,7 @@ export default class ClipboardAnnouncerExtension extends Extension {
             }
 
             if (category === 'binary') {
-                this._speakFeedback("Clipboard contains binary data");
+                this._speakFeedback("Clipboard contains unknown binary data");
                 return;
             }
 
