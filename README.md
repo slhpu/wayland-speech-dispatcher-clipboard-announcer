@@ -38,7 +38,13 @@ On Ubuntu 26.04 run
 
 `sudo apt update && sudo apt install gnome-shell-extension-manager`
 
-Next, clone or download this repository into your local GNOME extensions directory: 
+Next, clone or download this repository into your local GNOME extensions directory:
+
+Before you run the below command, ensure you have git installed.
+
+`sudo dnf install git` on fedora.
+
+`sudo apt update && sudo apt install git` on Ubuntu.
 
 ```git clone https://github.com/slhpu/wayland-speech-dispatcher-clipboard-announcer.git ~/.local/share/gnome-shell/extensions/clipboard-announcer@accessibility.local```
 
